@@ -50,7 +50,11 @@ export async function callClaudeSearch(messages, { model = 'claude-haiku-4-5-202
         response = await client.messages.create({ ...params, messages: allMessages });
       }
 
-      return response.content.filter(b => b.type === 'text').map(b => b.text).join('\n\n');
+      const texts = response.content.filter(b => b.type === 'text').map(b => b.text);
+      const result = texts.join('\n\n');
+      console.log('[Claude] Response preview:', result.slice(0, 300));
+      return result;
+
     } catch (err) {
       if (err?.status === 429 && attempt < 2) {
         const wait = 30 + attempt * 20;
