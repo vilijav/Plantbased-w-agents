@@ -71,8 +71,21 @@ Return ONLY JSON:
 {"title":"Original title","full_content":"Complete article text preserving all facts and structure","facts":["Every specific fact, stat, or claim"],"studies":[{"authors":"Names","journal":"Journal","year":"Year","finding":"Exact finding","url":"study URL if available"}],"people":[{"name":"Full name","role":"Role","quote":"Exact quote","gender":"male/female"}],"sources":[{"url":"https://...","description":"What this is","type":"article|youtube|instagram|study|other"}],"structure":["Section 1","Section 2"]}`
   }], { maxTokens: 3000, model: 'claude-sonnet-4-20250514' });
 
-  return parseJSON(raw);
+console.log('[Research] Raw response:', raw.slice(0, 500));
+  try {
+    return parseJSON(raw);
+  } catch (e) {
+    console.error('[Research] Parse failed, trying extraction...');
+    // Fallback: ask Claude to extract JSON from the messy response
+    const { callClaude } = await import('../utils/claude.js');
+    const extracted = await callClaude([{
+      role: 'user',
+      content: 'Extract ONLY the JSON array from this text. Return nothing else:\n\n' + raw.slice(0, 3000)
+    }], { maxTokens: 1500, model: 'claude-haiku-4-5-20251001' });
+    return parseJSON(extracted);
+  }
 }
+
 
 // ─── Find a second article on same topic (optional enrichment) ───
 export async function findRelatedArticle(topic) {
